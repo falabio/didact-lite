@@ -1,0 +1,11 @@
+=== 'family' in ALL subjects ===
+  ID:230 | SUB:Islamic Religious Studies | The uncle of the prophet referred to in Suratul Masad was
+  ID:520 | SUB:Christian Religious Studies | Jacob has 12 children but loved the 11th born more than the rest because .......
+  ID:528 | SUB:Social Studies | People's opinion about your family in respect to what happened in the past can b
+  ID:554 | SUB:Social Studies | Large families may not be able to take care of their children well because of ..
+  ID:555 | SUB:Social Studies | Companionship survival and security can be derived from ......
+  ID:614 | SUB:Social Studies | Which of these is NOT the effect of marital problem on children?
+  ID:621 | SUB:Social Studies | When an individual intends to go into marriage, there are certain procedures tha
+  ID:681 | SUB:Home Economics | The field of study that is concerned with improving family living is ...........
+  ID:682 | SUB:Home Economics | Which of the following is not a quality of a good home maker
+  ID:685 | SUB:Home Economics | Arrival of a new baby can cause .... In the family

@@ -1,0 +1,338 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ─── Didact Design System ─────────────────────────────────────────────── */
+
+:root {
+  /* Core palette — Apple-inspired */
+  --bg:           #FAFAFA;
+  --surface:      #FFFFFF;
+  --surface-2:    #F5F5F7;
+  --surface-3:    #EFEFEF;
+  --border:       #D1D1D6;
+  --border-light: #E5E5EA;
+
+  /* Text — Darkened for high contrast */
+  --text-primary:   #000000;
+  --text-secondary: #3A3A3C;
+  --text-tertiary:  #636366;
+
+  /* Accent — Apple blue */
+  --accent:       #0071E3;
+  --accent-hover: #0077ED;
+  --accent-light: #EBF3FF;
+
+  /* Semantic */
+  --success:      #34C759;
+  --warning:      #FF9F0A;
+  --danger:       #FF3B30;
+  --pro:          #AF52DE;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
+
+  /* Radii */
+  --radius-sm:  6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+}
+
+/* ─── Global Reset ───────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: #000000 !important;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #000000;
+}
+
+/* ─── Form Elements ──────────────────────────────────────────────────────── */
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+input:focus, select:focus, textarea:focus {
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.anim-fade-up    { animation: fadeUp    var(--dur-slow) var(--ease) both; }
+.anim-fade-in    { animation: fadeIn    var(--dur-base) var(--ease) both; }
+.anim-slide-right { animation: slideRight var(--dur-base) var(--ease) both; }
+.anim-scale-in   { animation: scaleIn   var(--dur-base) var(--ease) both; }
+.anim-slide-up   { animation: slideInUp var(--dur-base) var(--ease) both; }
+.cursor-blink    { animation: blink 1s step-end infinite; }
+
+/* ─── Utility Classes ────────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.surface-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--text-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  letter-spacing: -0.01em;
+}
+.btn-primary:hover  { background: #333; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  letter-spacing: -0.01em;
+}
+.btn-accent:hover  { background: var(--accent-hover); }
+.btn-accent:active { transform: scale(0.98); }
+.btn-accent:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.btn-ghost:hover  { background: var(--surface-2); color: var(--text-primary); }
+.btn-ghost:active { transform: scale(0.98); }
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.btn-danger:hover { filter: brightness(1.1); }
+.btn-danger:active { transform: scale(0.98); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.input-field {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-primary);
+  border: 1.5px solid transparent;
+  transition: all var(--dur-fast) var(--ease);
+}
+.input-field:focus {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+}
+
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 20px 0;
+}
+
+/* ─── Print Styles ───────────────────────────────────────────────────────── */
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+
+  .print\:hidden { display: none !important; }
+
+  @page {
+    size: A4;
+    margin: 20mm 18mm;
+  }
+}
+
+/* ─── Prose override for markdown ────────────────────────────────────────── */
+.prose { color: var(--text-primary); }
+.prose p { margin: 0; }
+
+/* ─── Hard-kill Next.js Dev/Static Indicators ─────────────────────────────── */
+/* These sometimes persist in development even with devIndicators: false */
+nextjs-static-indicator,
+[data-nextjs-dev-indicator], 
+#next-dev-indicator,
+[data-next-dev-overlay],
+.nextjs-static-indicator-container {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@media print {
+  nextjs-static-indicator,
+  [data-nextjs-dev-indicator], 
+  #next-dev-indicator,
+  [data-next-dev-overlay],
+  .nextjs-static-indicator-container,
+  .nextjs-toast-errors-parent,
+  .cl-internal-ph19v0, 
+  #clerk-dev-badge,
+  .__clerk-badge,
+  .cl-internal-17dz0p0 {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+}

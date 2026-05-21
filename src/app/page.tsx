@@ -544,7 +544,19 @@ export default function Home() {
                                         setGeneratedPlan(null);
                                         setIsWorkspaceActive(false);
                                     }}
-                                    onPrint={() => window.print()}
+                                    onPrint={() => {
+                                        const originalTitle = document.title;
+                                        const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+                                        const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+                                        const title = `${cleanSubject}_${cleanGrade}_Lesson_Plans`;
+                                        document.title = title;
+                                        setTimeout(() => {
+                                            window.print();
+                                            setTimeout(() => {
+                                                document.title = originalTitle;
+                                            }, 100);
+                                        }, 100);
+                                    }}
                                     onRefine={async (text, action) => {
                                         try {
                                             const instructionMap: Record<string, string> = {

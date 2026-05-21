@@ -19,7 +19,8 @@ import {
     Search,
     ChevronDown,
     Check,
-    X
+    X,
+    Printer
 } from 'lucide-react';
 import { SchemeRow } from '../../types';
 import { SUBJECTS, CLASSES, TERMS, CONTENT_DEPTHS, SESSIONS, DURATIONS, PERIOD_COUNTS, PERIOD_DURATIONS } from '../../lib/constants';
@@ -152,13 +153,28 @@ export default function CreationHub({
         }
     };
 
+    const handlePrintOutline = () => {
+        const originalTitle = document.title;
+        const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+        const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+        const title = `${cleanSubject}_${cleanGrade}_Curriculum_Outline`;
+        document.title = title;
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 100);
+        }, 100);
+    };
+
     return (
-        <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="w-full max-w-4xl mx-auto bg-white rounded-[40px] shadow-2xl border border-zinc-100 overflow-hidden"
-        >
+        <>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="w-full max-w-4xl mx-auto bg-white rounded-[40px] shadow-2xl border border-zinc-100 overflow-hidden print:hidden"
+            >
             {/* Header */}
             <div className="p-8 border-b border-zinc-50 flex items-center justify-between bg-zinc-50/50">
                 <button 
@@ -718,14 +734,22 @@ export default function CreationHub({
                                     <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Curriculum Structure ({items.length} Weeks)</h3>
                                     <div className="flex items-center gap-6">
                                         {items.length > 0 && (
-                                            <button 
-                                                onClick={() => {
-                                                    if(window.confirm("Clear all topics?")) setItems([]);
-                                                }}
-                                                className="flex items-center gap-2 text-xs font-black text-red-500 hover:text-red-600 transition-colors"
-                                            >
-                                                <X size={14}/> Clear All
-                                            </button>
+                                            <>
+                                                <button 
+                                                    onClick={handlePrintOutline}
+                                                    className="flex items-center gap-2 text-xs font-black text-zinc-600 hover:text-black transition-colors"
+                                                >
+                                                    <Printer size={14}/> Print Outline
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        if(window.confirm("Clear all topics?")) setItems([]);
+                                                    }}
+                                                    className="flex items-center gap-2 text-xs font-black text-red-500 hover:text-red-600 transition-colors"
+                                                >
+                                                    <X size={14}/> Clear All
+                                                </button>
+                                            </>
                                         )}
                                         <button 
                                             onClick={() => setItems([...items, { week: String(items.length + 1), startDate: "", endDate: "", topic: "", objectives: "" }])}
@@ -842,5 +866,48 @@ export default function CreationHub({
                 </AnimatePresence>
             </div>
         </motion.div>
+
+            {/* Curriculum Outline Print Layout */}
+            <div className="hidden print:block font-serif text-black leading-relaxed" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                <style>{`
+                    @media print {
+                        @page {
+                            margin: 0;
+                        }
+                        body {
+                            padding: 1.6cm !important;
+                            margin: 0 !important;
+                            background: #fff !important;
+                        }
+                    }
+                `}</style>
+                <div className="text-center space-y-4 pb-6 border-b-2 border-black mb-8">
+                    <h1 className="text-3xl font-extrabold uppercase m-0">{term} Curriculum Outline</h1>
+                    <p className="text-lg font-medium uppercase m-0">
+                        {subject} • {classGrade} • {session}
+                    </p>
+                    {teacherName && <p className="text-xs uppercase m-0">Master Teacher: {teacherName}</p>}
+                </div>
+
+                <table className="w-full border-collapse border border-black text-sm">
+                    <thead>
+                        <tr>
+                            <th className="border border-black p-2 text-left font-bold uppercase w-16">Week</th>
+                            <th className="border border-black p-2 text-left font-bold uppercase">Topic / Content Outline</th>
+                            <th className="border border-black p-2 text-left font-bold uppercase">Learning Objectives / Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items.map((item, idx) => (
+                            <tr key={idx}>
+                                <td className="border border-black p-2 font-bold text-center">{idx + 1}</td>
+                                <td className="border border-black p-2 font-bold">{item.topic || 'Not Specified'}</td>
+                                <td className="border border-black p-2">{item.objectives || 'None Specified'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </>
     );
 }

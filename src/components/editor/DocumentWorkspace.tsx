@@ -108,7 +108,7 @@ export default function DocumentWorkspace({
         if (!content) return;
 
         // Temporarily inject school name header for the PDF capture
-        let originalPadding = content.style.padding;
+        const originalPadding = content.style.padding;
         let headerDiv: HTMLDivElement | null = null;
 
         if (schoolName && !generatedPlan.sections) {
@@ -210,12 +210,20 @@ export default function DocumentWorkspace({
                         font-style: normal !important;
                     }
                     @media print {
+                        @page {
+                            margin: 0;
+                        }
+                        body {
+                            padding: 1.6cm !important;
+                            margin: 0 !important;
+                            background: #fff !important;
+                        }
                         body > *:not(#app-root) { display: none !important; }
                         #app-root * { visibility: hidden; }
                         #printable-content, #printable-content * { visibility: visible !important; }
                         #printable-content {
-                            position: absolute !important; left: 0 !important; top: 0 !important;
-                            width: 100% !important; margin: 0 !important; padding: 0 !important;
+                            position: absolute !important; left: 1.6cm !important; top: 1.6cm !important;
+                            width: calc(100% - 3.2cm) !important; margin: 0 !important; padding: 0 !important;
                             background: #fff !important; box-shadow: none !important; border: none !important;
                         }
                         ${printFilter ? `

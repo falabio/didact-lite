@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const isPremium = isPremiumFlag || (premiumUntil && new Date(String(premiumUntil)) > new Date());
     const isOwner = user?.primaryEmailAddress?.emailAddress === 'felixalabi26@gmail.com';
     
-    const modelName = (isPremium || isOwner) ? 'gemini-3.1-pro-preview' : 'gemini-3-flash-preview';
+    const modelName = (isPremium || isOwner) ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
 
     const body = await req.json();
     const { topic, subject } = body;

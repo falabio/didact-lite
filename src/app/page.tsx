@@ -6,11 +6,12 @@ import { useUser } from '@clerk/nextjs';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import dynamic from 'next/dynamic';
+
 // Component Imports
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import ProgressiveStepper from '../components/planner/ProgressiveStepper';
-import DocumentWorkspace from '../components/editor/DocumentWorkspace';
 import HistorySidebar from '../components/planner/HistorySidebar';
 import OmniSearch from '../components/planner/OmniSearch';
 import AgenticSidebar from '../components/workspace/AgenticSidebar';
@@ -19,7 +20,9 @@ import AgenticSidebar from '../components/workspace/AgenticSidebar';
 import { SchemeRow, AppTab } from '../types';
 import CreationHub from '../components/planner/CreationHub';
 import QuestionBank from '../components/workspace/QuestionBank';
-import PremiumModal from '../components/monetization/PremiumModal';
+
+const DocumentWorkspace = dynamic(() => import('../components/editor/DocumentWorkspace'), { ssr: false });
+const PremiumModal = dynamic(() => import('../components/monetization/PremiumModal'), { ssr: false });
 
 export default function Home() {
     const { user, isSignedIn, isLoaded } = useUser();
@@ -135,7 +138,7 @@ export default function Home() {
     const saveToHistory = (type: string, data: any) => {
         const newEntry = {
             id: Date.now(),
-            type, subject, classGrade, term, teacherName, session, items, periodConfig, data,
+            type, subject, classGrade, term, teacherName, session, schoolName, items, periodConfig, data,
             date: new Date().toLocaleDateString()
         };
         const updated = [newEntry, ...savedHistory].slice(0, 15);
@@ -149,6 +152,7 @@ export default function Home() {
         setTerm(entry.term);
         setTeacherName(entry.teacherName);
         setSession(entry.session);
+        if (entry.schoolName) setSchoolName(entry.schoolName);
         setItems(entry.items);
         if (entry.type === 'Plan') {
             setGeneratedPlan(entry.data);
@@ -190,15 +194,45 @@ export default function Home() {
             const endpoint = activeTab === 'planner' ? '/api/generate-plan' : 
                              activeTab === 'tests' ? '/api/generate-test' : '/api/generate-exam';
 
+            let requestBody: any = { 
+                term, subject, classGrade, items: reqItems, 
+                periodConfig: { p1: lessonDuration, p2: lessonDuration }, 
+                contentLength: pagesPerLesson, 
+                includeSow, session, teacherName 
+            };
+
+            if (activeTab === 'tests') {
+                requestBody = {
+                    title: `${classGrade} ${subject} - ${term} Test`,
+                    subject,
+                    classGrade,
+                    term,
+                    teacherName,
+                    schoolName,
+                    items: reqItems,
+                    planContext: generatedPlan || reqItems,
+                    bloomLevel: "Remembering, Understanding, and Applying",
+                    duration: "40 Minutes",
+                    types: ["mcq", "fill_in_gap", "theory"]
+                };
+            } else if (activeTab === 'exams') {
+                requestBody = {
+                    subject,
+                    classGrade,
+                    term,
+                    teacherName,
+                    schoolName,
+                    topics: reqItems,
+                    planContent: generatedPlan || reqItems,
+                    bloomLevel: "Mixed (Remembering, Understanding, Applying, Analyzing, Evaluating)",
+                    duration: "2 Hours"
+                };
+            }
+
             const response = await fetch(endpoint, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 signal: controller.signal,
-                body: JSON.stringify({ 
-                    term, subject, classGrade, items: reqItems, 
-                    periodConfig: { p1: lessonDuration, p2: lessonDuration }, 
-                    contentLength: pagesPerLesson, 
-                    includeSow, session, teacherName 
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) throw new Error("Generation failed.");
@@ -226,7 +260,7 @@ export default function Home() {
                             if (parsed.upgradeRequired) {
                                 setIsPremiumModalOpen(true);
                                 setLoading(false);
-                                controller.close();
+                                controller.abort();
                                 return;
                             }
                             throw new Error(parsed.message || "Generation failed.");
@@ -409,6 +443,7 @@ export default function Home() {
                             schoolName={schoolName}
                             term={term}
                             session={session}
+                            teacherName={teacherName}
                             chatMessages={chatMessages}
                             chatInput={chatInput}
                             setChatInput={setChatInput}
@@ -421,6 +456,7 @@ export default function Home() {
                                 if (field === 'schoolName') setSchoolName(val);
                                 if (field === 'term') setTerm(val);
                                 if (field === 'session') setSession(val);
+                                if (field === 'teacherName') setTeacherName(val);
                             }}
                             generatedDocs={generatedDocs}
                             onViewDoc={(idx) => {
@@ -435,9 +471,17 @@ export default function Home() {
                                 }
                                 const weekNum = generatedDocs[idx].week;
                                 setActivePrintWeek(weekNum);
+                                const originalTitle = document.title;
+                                const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+                                const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+                                const title = `${cleanSubject}_${cleanGrade}_Week_${weekNum}_Lesson_Plan`;
+                                document.title = title;
                                 setTimeout(() => {
                                     window.print();
                                     setActivePrintWeek(null);
+                                }, 100);
+                                setTimeout(() => {
+                                    document.title = originalTitle;
                                 }, 100);
                             }}
                             onDownloadAll={() => {
@@ -446,7 +490,15 @@ export default function Home() {
                                     return;
                                 }
                                 setActivePrintWeek(null);
+                                const originalTitle = document.title;
+                                const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+                                const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+                                const title = `${cleanSubject}_${cleanGrade}_Lesson_Plans`;
+                                document.title = title;
                                 setTimeout(() => window.print(), 100);
+                                setTimeout(() => {
+                                    document.title = originalTitle;
+                                }, 100);
                             }}
                             onPrintAll={() => {
                                 if (!isPremium) {
@@ -454,7 +506,15 @@ export default function Home() {
                                     return;
                                 }
                                 setActivePrintWeek(null);
+                                const originalTitle = document.title;
+                                const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+                                const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+                                const title = `${cleanSubject}_${cleanGrade}_Lesson_Plans`;
+                                document.title = title;
                                 setTimeout(() => window.print(), 100);
+                                setTimeout(() => {
+                                    document.title = originalTitle;
+                                }, 100);
                             }}
                         />
                     </div>
@@ -485,13 +545,80 @@ export default function Home() {
                                         setIsWorkspaceActive(false);
                                     }}
                                     onPrint={() => window.print()}
-                                    onRefine={(text, path) => alert("Refine specific: " + text)}
+                                    onRefine={async (text, action) => {
+                                        try {
+                                            const instructionMap: Record<string, string> = {
+                                                rewrite: 'Rewrite this text to be clearer and more professional while preserving meaning.',
+                                                simplify: 'Simplify this text so a JSS student can easily understand it. Use simpler words.',
+                                                expand: 'Expand this text with more detail, examples, and explanation. Make it richer.',
+                                                differentiate: 'Rewrite this text to accommodate different learning levels: provide a simplified version and an advanced version.',
+                                            };
+                                            const instruction = instructionMap[action as string] || `Apply this refinement: ${action}`;
+                                            const res = await fetch('/api/refine', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ originalText: text, instruction })
+                                            });
+                                            if (!res.ok) {
+                                                const err = await res.json();
+                                                if (res.status === 403) {
+                                                    setIsPremiumModalOpen(true);
+                                                    return;
+                                                }
+                                                throw new Error(err.error || 'Refinement failed');
+                                            }
+                                            const data = await res.json();
+                                            if (data.refinedText) {
+                                                const planStr = JSON.stringify(generatedPlan);
+                                                const originalStr = typeof text === 'string' ? text : '';
+                                                if (originalStr && planStr.includes(originalStr)) {
+                                                    const updatedStr = planStr.replace(originalStr, data.refinedText);
+                                                    setGeneratedPlan(JSON.parse(updatedStr));
+                                                } else {
+                                                    navigator.clipboard?.writeText(data.refinedText);
+                                                }
+                                            }
+                                        } catch (err: any) {
+                                            console.error('Refine error:', err);
+                                        }
+                                    }}
                                     updatePlanField={(path, val) => {
+                                        if (path === '__replace_root__') {
+                                            setGeneratedPlan(val);
+                                            return;
+                                        }
                                         const newPlan = JSON.parse(JSON.stringify(generatedPlan));
+                                        const parts = path.replace(/\]/g, '').split(/[.\[]/);
+                                        let obj: any = newPlan;
+                                        for (let i = 0; i < parts.length - 1; i++) {
+                                            if (obj[parts[i]] !== undefined) obj = obj[parts[i]];
+                                        }
+                                        obj[parts[parts.length - 1]] = val;
                                         setGeneratedPlan(newPlan);
                                     }}
                                     isPremium={isPremium}
-                                    onGlobalRefine={() => alert("Global refine active")}
+                                    onGlobalRefine={async (instruction: string) => {
+                                        try {
+                                            if (!instruction) return;
+                                            const res = await fetch('/api/refine', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ originalContent: JSON.stringify(generatedPlan), prompt: instruction })
+                                            });
+                                            if (!res.ok) {
+                                                const err = await res.json();
+                                                if (res.status === 403) { setIsPremiumModalOpen(true); return; }
+                                                throw new Error(err.error || 'Refinement failed');
+                                            }
+                                            const data = await res.json();
+                                            if (data.updatedContent) {
+                                                const cleaned = data.updatedContent.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
+                                                setGeneratedPlan(JSON.parse(cleaned));
+                                            }
+                                        } catch (err: any) {
+                                            console.error('Global refine error:', err);
+                                        }
+                                    }}
                                 />
                             ) : (
                                 <div className="h-full flex items-center justify-center text-zinc-400">
@@ -514,7 +641,7 @@ export default function Home() {
 
             {!isWorkspaceActive && (
                 <footer className="py-20 text-center opacity-30 text-[11px] font-medium tracking-widest uppercase print:hidden">
-                    Didact AI Pedagogy • Premium EdTech Suite • {new Date().getFullYear()}
+                    Didact AI Pedagogy • {new Date().getFullYear()}
                 </footer>
             )}
 

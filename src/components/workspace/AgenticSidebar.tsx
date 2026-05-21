@@ -9,6 +9,7 @@ interface AgenticSidebarProps {
     schoolName: string;
     term: string;
     session: string;
+    teacherName: string;
     chatMessages: {role: 'user'|'bot', content: string}[];
     chatInput: string;
     setChatInput: (val: string) => void;
@@ -24,7 +25,7 @@ interface AgenticSidebarProps {
 }
 
 export default function AgenticSidebar({
-    subject, classGrade, schoolName, term, session, chatMessages, chatInput, setChatInput, onSendChat, loading, chatEndRef, onUpdateContext,
+    subject, classGrade, schoolName, term, session, teacherName, chatMessages, chatInput, setChatInput, onSendChat, loading, chatEndRef, onUpdateContext,
     generatedDocs = [], onViewDoc, onDownloadDoc, onDownloadAll, onPrintAll
 }: AgenticSidebarProps) {
     return (
@@ -73,6 +74,15 @@ export default function AgenticSidebar({
                             value={schoolName} 
                             onChange={e => onUpdateContext('schoolName', e.target.value)}
                             placeholder="School Name (For PDF Export)"
+                            className="bg-transparent border-none outline-none text-xs font-bold text-zinc-800 w-full"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 bg-zinc-50 p-2 rounded-lg border border-zinc-100 col-span-2">
+                        <Users size={14} className="text-zinc-400" />
+                        <input 
+                            value={teacherName} 
+                            onChange={e => onUpdateContext('teacherName', e.target.value)}
+                            placeholder="Teacher Name"
                             className="bg-transparent border-none outline-none text-xs font-bold text-zinc-800 w-full"
                         />
                     </div>

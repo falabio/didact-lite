@@ -28,7 +28,7 @@ export async function POST(req: Request) {
                         (user?.publicMetadata?.premiumUntil && new Date(String(user.publicMetadata.premiumUntil)) > new Date());
         const isOwner = user?.primaryEmailAddress?.emailAddress === 'felixalabi26@gmail.com';
         
-        const primaryModel = (isPremium || isOwner) ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite';
+        const primaryModel = (isPremium || isOwner) ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
 
         if (!isPremium && !isOwner && user?.id) {
           const result = await db.execute({
@@ -97,8 +97,37 @@ Output MUST be strictly JSON:
           const chunk = items.slice(i, i + CHUNK_SIZE);
           const chunkPromises = chunk.map(async (item: any, idxInChunk: number) => {
             const globalIdx = i + idxInChunk;
+
+            // Fetch a real active online educational resource URL via Google Search Grounding
+            let fetchedUrl = '';
+            try {
+              const searchModel = genAI.getGenerativeModel({ 
+                model: 'gemini-2.5-flash', 
+                tools: [{ googleSearch: {} } as any] 
+              });
+              const searchPrompt = `Find a highly relevant, real, active online learning resource, interactive lesson, simulation, or video (from reputable platforms like Khan Academy, PhET, Wikipedia, BBC Bitesize, CK-12, or YouTube) for teaching this school topic:
+Subject: ${subject} | Topic: ${item.topic} | Class: ${classGrade}
+
+Respond with ONLY the single primary URL. Do not include any other text or markdown or backticks.`;
+              const searchResult = await searchModel.generateContent(searchPrompt);
+              const textResult = searchResult.response.text().trim();
+              if (textResult && (textResult.startsWith('http://') || textResult.startsWith('https://') || textResult.includes('http'))) {
+                // Extract clean URL in case the model added markdown or formatting
+                const match = textResult.match(/https?:\/\/[^\s`"]+/);
+                if (match) {
+                  fetchedUrl = match[0];
+                }
+              }
+            } catch (searchErr) {
+              console.error(`Search grounding failed for Week ${item.week}`, searchErr);
+            }
+
+            const realUrlInstruction = fetchedUrl 
+              ? `For this week, the primary recommended online learning resource is: "${fetchedUrl}". You MUST include this specific URL ("${fetchedUrl}") inside both the "period1.reference" and "period2.reference" JSON fields along with any relevant standard textbook references.`
+              : `You MUST provide a real, active, specific online educational learning URL (like Khan Academy, PhET, CK-12, or YouTube) inside the "period1.reference" and "period2.reference" fields.`;
+
             const weekPrompt = `
-You are a Master Teacher at a top Nigerian Private School.
+You are ${teacherName || 'a Master Teacher'}, a Master Teacher at a top Nigerian Private School.
 Generate an exceptionally detailed Lesson Plan for Week ${item.week}.
 
 CONTEXT:
@@ -106,6 +135,20 @@ Subject: ${subject} | Class: ${classGrade} | Topic: ${item.topic}
 Timing: Period 1 (${p1Duration}), Period 2 (${p2Duration})
 Pedagogy: Use "I Do, We Do, You Do", Creative Hook, Detailed Content, specific Evaluation questions.
 DEPTH: ${contentLength}.
+
+STRICT ALIGNMENT & DUMMY TEXT INSTRUCTIONS:
+1. SUBJECT INTEGRITY: Content must be strictly and 100% relevant to the subject of "${subject}". Do NOT include or mix in content/examples from unrelated subjects (e.g. absolutely NO computer/ICT/information technology elements inside Agricultural Science or Mathematics plans).
+2. NO DUMMY NAME LEAKS: Do NOT use the teacher's name ("${teacherName || ''}") or school name as fictional characters, examples, or word problem placeholders inside any part of the plan. If you need names in word problems or class activities, use common Nigerian names (like "Tunde", "Amina", "Chidi", "Yinka", etc.) instead.
+3. SVG GEOMETRY DRAWINGS (FOR MATHEMATICS): If the subject is Mathematics and the week's topic involves geometric shapes, diagrams, graphs, angles, shapes, or grids, you MUST draw them in the "content" or "activities" arrays using clean, standard vector SVG code! Wrap the SVG code inside an xml code block like:
+\`\`\`xml
+<svg viewBox="0 0 200 200" width="200" height="200" style="margin: 0 auto; display: block;">
+  <!-- SVG drawing here (e.g. circle, rect, polygon, line, text for labels) -->
+</svg>
+\`\`\`
+Ensure all shapes have clean styling (e.g. stroke="black" stroke-width="2" fill="none") and clearly labeled dimensions using <text> elements so they are perfectly legible and print clean.
+4. MANDATORY REAL REFERENCES & ONLINE SOURCES:
+   ${realUrlInstruction}
+   In addition to this URL, you may also cite a standard West African/Nigerian textbook (like STAN, Macmillan, Evans, New General Mathematics, Prescribed Agricultural Science, etc.). Specify the exact book title, publisher/author, and chapter/page range. Do NOT use generic placeholders like "NERDC curriculum" or "Reference books".
 
 Output MUST be strictly JSON:
 {

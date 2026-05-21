@@ -8,8 +8,6 @@ import RefinementToolbar from './RefinementToolbar';
 import GlobalRefinePalette from './GlobalRefinePalette';
 import ShareWhatsApp from '../common/ShareWhatsApp';
 import { Loader2, Download } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface DocumentWorkspaceProps {
     generatedPlan: any;
@@ -24,7 +22,7 @@ interface DocumentWorkspaceProps {
     onRefine: (text: string | string[], path: string) => void;
     updatePlanField: (path: string, value: any) => void;
     isPremium: boolean;
-    onGlobalRefine: () => void;
+    onGlobalRefine: (instruction: string) => void;
     printFilter?: string | null;
 }
 
@@ -113,7 +111,7 @@ export default function DocumentWorkspace({
         let originalPadding = content.style.padding;
         let headerDiv: HTMLDivElement | null = null;
 
-        if (schoolName) {
+        if (schoolName && !generatedPlan.sections) {
             headerDiv = document.createElement('div');
             headerDiv.style.textAlign = 'center';
             headerDiv.style.marginBottom = '30px';
@@ -126,6 +124,11 @@ export default function DocumentWorkspace({
         try {
             // Need a slight delay to ensure DOM is updated
             await new Promise(r => setTimeout(r, 100));
+
+            // Dynamically import client-only packages to prevent SSR issues
+            const html2canvas = (await import('html2canvas')).default;
+            const jsPDFMod = await import('jspdf');
+            const jsPDF = jsPDFMod.jsPDF || jsPDFMod.default;
 
             const canvas = await html2canvas(content, { scale: 2, useCORS: true });
             const imgData = canvas.toDataURL('image/png');
@@ -148,7 +151,11 @@ export default function DocumentWorkspace({
                 heightLeft -= pageHeight;
             }
 
-            pdf.save(`${subject}_${classGrade}_Document.pdf`);
+            const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+            const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+            const docType = generatedPlan.sections ? 'Exam' : 'Lesson_Plan';
+            const filename = `${cleanSubject}_${cleanGrade}_${docType}.pdf`;
+            pdf.save(filename);
 
         } catch (e) {
             console.error("PDF Generation Error", e);
@@ -178,7 +185,7 @@ export default function DocumentWorkspace({
                 onClose={() => setIsGlobalPaletteOpen(false)}
                 onExecute={(instruction) => {
                     // Send global instruction
-                    onGlobalRefine();
+                    onGlobalRefine(instruction);
                 }}
             />
 
@@ -319,6 +326,18 @@ export default function DocumentWorkspace({
                     {/* Test/Exam View */}
                     {generatedPlan.sections && (
                         <div className="space-y-16">
+                            <div className="text-center space-y-4 pb-12 border-b-2 border-black scheme-header mb-10">
+                                {schoolName && <h1 className="text-3xl font-black uppercase">{schoolName}</h1>}
+                                <h2 className="text-xl font-bold uppercase">
+                                    {term} {generatedPlan.title?.toLowerCase().includes('exam') ? 'Term Examination' : 'Continuous Assessment'}
+                                </h2>
+                                <div className="text-[11px] font-bold uppercase grid grid-cols-2 lg:grid-cols-4 gap-2 pt-2">
+                                    <span>Teacher: {teacherName || 'Not specified'}</span>
+                                    <span>Subject: {subject}</span>
+                                    <span>Class: {classGrade}</span>
+                                    <span>Session: {session}</span>
+                                </div>
+                            </div>
                             <div className="space-y-4">
                                 <h2 className="text-2xl font-black text-black">{generatedPlan.title}</h2>
                                 <p className="italic text-zinc-600 font-serif">{generatedPlan.instructions}</p>

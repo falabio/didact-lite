@@ -114,11 +114,11 @@ export default function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModa
               {/* Day Pass Option */}
               <button
                 onClick={() => setSelectedPlan('day_pass')}
-                className={\`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all \${
+                className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
                   selectedPlan === 'day_pass' 
                     ? 'border-indigo-600 bg-indigo-50 shadow-sm' 
                     : 'border-zinc-200 hover:border-indigo-300'
-                }\`}
+                }`}
               >
                 <div className="text-left">
                   <div className="font-bold text-zinc-900">{plans.day_pass.label}</div>
@@ -130,11 +130,11 @@ export default function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModa
               {/* Termly Option */}
               <button
                 onClick={() => setSelectedPlan('termly')}
-                className={\`w-full relative flex items-center justify-between p-4 rounded-xl border-2 transition-all \${
+                className={`w-full relative flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
                   selectedPlan === 'termly' 
                     ? 'border-indigo-600 bg-indigo-50 shadow-sm' 
                     : 'border-zinc-200 hover:border-indigo-300'
-                }\`}
+                }`}
               >
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                   Best Value

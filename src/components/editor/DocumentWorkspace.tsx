@@ -35,6 +35,34 @@ export default function DocumentWorkspace({
     const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
     const [isPredicting, setIsPredicting] = useState(false);
 
+    const [includeQuestions, setIncludeQuestions] = useState(false);
+    const [questionsMap, setQuestionsMap] = useState<Record<number, any[]>>({});
+    const [fetchedWeeks, setFetchedWeeks] = useState<Record<number, boolean>>({});
+
+    useEffect(() => {
+        if (!isPremium || !generatedPlan?.weeklyPlans) return;
+
+        generatedPlan.weeklyPlans.forEach((plan: any, idx: number) => {
+            if (plan.topic && !fetchedWeeks[idx]) {
+                setFetchedWeeks(prev => ({ ...prev, [idx]: true }));
+                fetch(`/api/bank?q=${encodeURIComponent(plan.topic)}&subject=${encodeURIComponent(subject)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data)) {
+                            setQuestionsMap(prev => ({
+                                ...prev,
+                                [idx]: data.slice(0, 5)
+                            }));
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error prefetching questions for week", idx, err);
+                        setFetchedWeeks(prev => ({ ...prev, [idx]: false }));
+                    });
+            }
+        });
+    }, [generatedPlan?.weeklyPlans, subject, isPremium, fetchedWeeks]);
+
     useEffect(() => {
         const handleMouseUp = () => {
             const sel = window.getSelection();
@@ -98,6 +126,21 @@ export default function DocumentWorkspace({
         }
     };
 
+    const handlePrint = () => {
+        const originalTitle = document.title;
+        try {
+            const cleanSubject = subject.replace(/[^a-zA-Z0-9]+/g, '_');
+            const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
+            const docType = generatedPlan.sections ? 'Exam' : 'Lesson_Plan';
+            document.title = `${cleanSubject}_${cleanGrade}_${docType}`;
+            onPrint();
+        } finally {
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
+    };
+
     const handleDownloadPDF = async () => {
         if (!isPremium) {
             alert("PDF Downloads are a premium feature!");
@@ -121,9 +164,20 @@ export default function DocumentWorkspace({
             content.insertBefore(headerDiv, content.firstChild);
         }
 
+        // Hide wands, toolbars, sharing icons, and action buttons during PDF capture
+        const hiddenElements = Array.from(content.querySelectorAll('.print\\:hidden, [class*="print:hidden"], button')) as HTMLElement[];
+        const originalStyles = hiddenElements.map(el => ({
+            el,
+            display: el.style.display
+        }));
+
+        hiddenElements.forEach(el => {
+            el.style.display = 'none';
+        });
+
         try {
             // Need a slight delay to ensure DOM is updated
-            await new Promise(r => setTimeout(r, 100));
+            await new Promise(r => setTimeout(r, 150));
 
             // Dynamically import client-only packages to prevent SSR issues
             const html2canvas = (await import('html2canvas')).default;
@@ -155,6 +209,10 @@ export default function DocumentWorkspace({
             const cleanGrade = classGrade.replace(/[^a-zA-Z0-9]+/g, '_');
             const docType = generatedPlan.sections ? 'Exam' : 'Lesson_Plan';
             const filename = `${cleanSubject}_${cleanGrade}_${docType}.pdf`;
+            
+            pdf.setProperties({
+                title: `${cleanSubject} ${cleanGrade} ${docType.replace('_', ' ')}`
+            });
             pdf.save(filename);
 
         } catch (e) {
@@ -165,6 +223,11 @@ export default function DocumentWorkspace({
                 content.removeChild(headerDiv);
             }
             content.style.padding = originalPadding;
+
+            // Restore hidden elements
+            originalStyles.forEach(({ el, display }) => {
+                el.style.display = display;
+            });
         }
     };
 
@@ -189,15 +252,34 @@ export default function DocumentWorkspace({
                 }}
             />
 
-            <div className="flex justify-end gap-3 print:hidden mb-10">
+            <div className="flex justify-end gap-3 items-center print:hidden mb-10">
                 {isPremium && (
-                    <button onClick={() => setIsGlobalPaletteOpen(true)} className="btn-ghost border-pro/20 bg-pro/5 text-pro hover:bg-pro/10">
+                    <button onClick={() => setIsGlobalPaletteOpen(true)} className="btn-ghost border-pro/20 bg-pro/5 text-pro hover:bg-pro/10 flex items-center gap-1">
                         <Sparkles size={18}/> Global Pro Refine
                     </button>
                 )}
+                {isPremium ? (
+                    <label className="flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all select-none">
+                        <input
+                            type="checkbox"
+                            checked={includeQuestions}
+                            onChange={(e) => setIncludeQuestions(e.target.checked)}
+                            className="accent-indigo-600"
+                        />
+                        <span>Include Question Bank</span>
+                    </label>
+                ) : (
+                    <div 
+                        onClick={() => alert("Question Bank integration is a premium feature! Upgrade to Pro to embed past exam questions.")}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer opacity-60 hover:opacity-100 transition-all select-none"
+                    >
+                        <Sparkles size={14} className="text-zinc-400" />
+                        <span className="text-zinc-400">Include Question Bank (Pro)</span>
+                    </div>
+                )}
                 <button onClick={onClose} className="btn-ghost">Close Workspace</button>
-                <button onClick={handleDownloadPDF} className="btn-secondary shadow-sm"><Download size={18}/> Save PDF</button>
-                <button onClick={onPrint} className="btn-primary shadow-xl"><Printer size={18}/> Print</button>
+                <button onClick={handleDownloadPDF} className="btn-secondary shadow-sm flex items-center gap-1"><Download size={18}/> Save PDF</button>
+                <button onClick={handlePrint} className="btn-primary shadow-xl flex items-center gap-1"><Printer size={18}/> Print</button>
             </div>
 
             <div id="printable-content" className="surface-card bg-white p-12 shadow-2xl print:shadow-none print:p-0 rounded-[32px] border-none overflow-hidden relative selection:bg-blue-100 selection:text-blue-900">
@@ -326,6 +408,47 @@ export default function DocumentWorkspace({
                                             </div>
                                         );
                                     })}
+
+                                    {/* PRINTABLE PAST QUESTIONS assessment BLOCK */}
+                                    {includeQuestions && questionsMap[pIdx] && questionsMap[pIdx].length > 0 && (
+                                        <div className="pt-6 border-t-2 border-black mt-8 break-inside-avoid font-serif">
+                                            <h3 className="text-lg font-bold uppercase mb-4 text-black text-left">Assessment / Past WAEC & BECE Questions</h3>
+                                            <div className="space-y-6 text-left">
+                                                {questionsMap[pIdx].map((q: any, qIdx: number) => {
+                                                    let parsedOptions: any = null;
+                                                    if (q.options) {
+                                                        try {
+                                                            parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+                                                        } catch {
+                                                            parsedOptions = q.options;
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <div key={q.id || qIdx} className="space-y-2 text-[13px] break-inside-avoid text-black">
+                                                            <div className="flex gap-2">
+                                                                <span className="font-bold">{qIdx + 1}.</span>
+                                                                <div className="flex-1 font-medium">
+                                                                    <MarkdownBlock content={q.question_text} />
+                                                                </div>
+                                                                <span className="text-[10px] text-zinc-500 italic">({q.exam_type || 'Exam'} {q.year})</span>
+                                                            </div>
+                                                            {parsedOptions && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-0.5 pl-6 text-sm">
+                                                                    {Object.entries(parsedOptions).map(([key, val]) => (
+                                                                        <div key={key} className="flex gap-2">
+                                                                            <span className="font-bold">({key})</span>
+                                                                            <span>{val as string}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -415,7 +538,7 @@ export default function DocumentWorkspace({
             </div>
 
             <div className="pt-10 border-t border-zinc-100 mt-10 text-[10px] text-zinc-400 font-bold uppercase flex justify-between items-center italic px-12 pb-12 print:px-0 print-footer">
-                <span>Teacher: {teacherName || 'Not specified'}</span>
+                <span>{!isPremium && "Generated by Didact OS Pedagogy • "}Teacher: {teacherName || 'Not specified'}</span>
                 <span className="hidden sm:inline">Subject: {subject} ({classGrade})</span>
                 <span>Session: {term} ({session})</span>
             </div>

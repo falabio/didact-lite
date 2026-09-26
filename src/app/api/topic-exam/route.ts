@@ -16,7 +16,7 @@ export async function POST(req: Request) {
             sql: `
                 SELECT * FROM questions 
                 WHERE (academic_topics LIKE ? OR question_text LIKE ? OR subject LIKE ?)
-                AND year BETWEEN 2018 AND 2025
+                AND year BETWEEN 2018 AND 2026
                 LIMIT 15
             `,
             args: [queryTerm, queryTerm, queryTerm]
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
         const responseData = {
             title: `BECE Topic Exam: ${topic}`,
-            instructions: "Answer all questions. These are real past BECE questions from 2018-2025.",
+            instructions: "Answer all questions. These are real past BECE questions from 2018-2026.",
             sections: [
                 {
                     sectionTitle: `Section A: ${topic} (Past Questions)`,

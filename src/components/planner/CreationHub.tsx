@@ -832,7 +832,7 @@ export default function CreationHub({
                                     <Book size={32} />
                                 </div>
                                 <h3 className="text-2xl font-black text-black">Topic-to-Exam Builder</h3>
-                                <p className="text-zinc-400 font-medium">Type a topic to automatically pull relevant past BECE questions (2018-2025).</p>
+                                <p className="text-zinc-400 font-medium">Type a topic to automatically pull relevant past BECE questions (2018-2026).</p>
                             </div>
 
                             <div className="relative group">

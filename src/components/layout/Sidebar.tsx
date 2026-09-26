@@ -40,7 +40,7 @@ export default function Sidebar({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="relative w-80 h-full bg-white shadow-2xl p-8 flex flex-col"
+                        className="relative w-80 max-w-[85vw] h-full max-h-[100dvh] bg-white shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto pb-safe"
                     >
                         <div className="flex justify-between items-center mb-10">
                             <span className="text-lg font-bold text-black">Navigation</span>

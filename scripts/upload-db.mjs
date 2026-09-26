@@ -41,6 +41,10 @@ async function migrate() {
     )
   `);
 
+  // 2. Clear Existing Data
+  console.log("🗑️ Clearing existing questions on Turso to ensure clean sync...");
+  await remoteDb.execute("DELETE FROM questions");
+
   // 2. Fetch Data
   const rows = localDb.prepare("SELECT * FROM questions").all();
   console.log(`📦 Found ${rows.length} rows in local database.`);

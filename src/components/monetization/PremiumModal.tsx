@@ -126,7 +126,7 @@ export default function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModa
           </div>
 
           {/* Right Side: Plans */}
-          <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-center overflow-y-auto">
+          <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-center overflow-y-auto pb-safe sm:pb-8">
             <h3 className="text-lg sm:text-xl font-bold text-zinc-900 mb-4 sm:mb-6">Choose Your Plan</h3>
 
             <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
